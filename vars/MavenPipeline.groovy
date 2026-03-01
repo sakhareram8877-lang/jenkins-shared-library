@@ -4,7 +4,7 @@ def call(Map config) {
         agent any
 
         tools {
-            maven 'Maven-3'
+            maven 'M3'
         }
 
         environment {
