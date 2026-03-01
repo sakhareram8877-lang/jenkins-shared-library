@@ -3,19 +3,20 @@
 pipeline {
     agent any
 
-    // Use Maven installed in Jenkins (must match Global Tool Configuration)
     tools {
-        maven 'M3'
+        maven 'M3' // Must match the Maven installation in Jenkins
     }
 
     stages {
-        stage('Checkout & Build with Shared Library') {
+        stage('Build with Shared Library') {
             steps {
-                // Call your shared library function
-                mavenPipeline(
-                    branch: 'main',
-                    gitUrl: 'https://github.com/sakhareram8877-lang/jenkins-shared-library.git'
-                )
+                script {
+                    // Call the shared library function
+                    mavenPipeline(
+                        branch: 'main',
+                        gitUrl: 'https://github.com/sakhareram8877-lang/jenkins-shared-library.git'
+                    )
+                }
             }
         }
     }
