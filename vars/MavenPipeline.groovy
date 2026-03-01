@@ -1,32 +1,47 @@
-@Library('jenkins-shared-library') _
+def call(Map config) {
 
-pipeline {
-    agent any
+    pipeline {
+        agent any
 
-    tools {
-        maven 'M3' // Must match the Maven installation in Jenkins
-    }
+        tools {
+            maven 'M3'
+        }
 
-    stages {
-        stage('Build with Shared Library') {
-            steps {
-                script {
-                    // Call the shared library function
-                    mavenPipeline(
-                        branch: 'main',
-                        gitUrl: 'https://github.com/sakhareram8877-lang/jenkins-shared-library.git'
-                    )
+        stages {
+
+            stage('Checkout') {
+                steps {
+                    git branch: config.branch,
+                        url: config.gitUrl
+                }
+            }
+
+            stage('Build') {
+                steps {
+                    sh 'mvn clean package'
+                }
+            }
+
+            stage('Test') {
+                steps {
+                    sh 'mvn test'
+                }
+            }
+
+            stage('Archive') {
+                steps {
+                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo '✅ Build completed successfully!'
-        }
-        failure {
-            echo '❌ Build failed. Check Jenkins logs for details.'
+        post {
+            success {
+                echo "Build Successful"
+            }
+            failure {
+                echo "Build Failed"
+            }
         }
     }
 }
