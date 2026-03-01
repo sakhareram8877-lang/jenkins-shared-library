@@ -1,68 +1,31 @@
-def call(Map config) {
+@Library('jenkins-shared-library') _
 
-    pipeline {
-        agent any
+pipeline {
+    agent any
 
-        tools {
-            maven 'M3'
-        }
+    // Use Maven installed in Jenkins (must match Global Tool Configuration)
+    tools {
+        maven 'M3'
+    }
 
-        environment {
-            DOCKER_IMAGE = "my-app:${env.BUILD_NUMBER}"  // Tag Docker image with build number
-        }
-
-        stages {
-
-            stage('Checkout') {
-                steps {
-                    git branch: config.branch,
-                        url: config.gitUrl,
-                        credentialsId: config.credentialsId
-                }
-            }
-
-            stage('Build') {
-                steps {
-                    sh 'mvn clean package'
-                }
-            }
-
-            stage('Test') {
-                steps {
-                    sh 'mvn test'
-                }
-            }
-
-            stage('Docker Build') {
-                steps {
-                    sh 'docker build -t $DOCKER_IMAGE .'
-                }
-            }
-
-            stage('Docker Run') {
-                steps {
-                    sh '''
-                        docker stop my-app-container || true
-                        docker rm my-app-container || true
-                        docker run -d --name my-app-container -p 8080:8080 $DOCKER_IMAGE
-                    '''
-                }
-            }
-
-            stage('Archive Artifacts') {
-                steps {
-                    archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-                }
+    stages {
+        stage('Checkout & Build with Shared Library') {
+            steps {
+                // Call your shared library function
+                mavenPipeline(
+                    branch: 'main',
+                    gitUrl: 'https://github.com/sakhareram8877-lang/jenkins-shared-library.git'
+                )
             }
         }
+    }
 
-        post {
-            success {
-                echo "Build and Docker Deployment Successful ✅"
-            }
-            failure {
-                echo "Build or Deployment Failed ❌"
-            }
+    post {
+        success {
+            echo '✅ Build completed successfully!'
+        }
+        failure {
+            echo '❌ Build failed. Check Jenkins logs for details.'
         }
     }
 }
