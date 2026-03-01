@@ -7,12 +7,17 @@ def call(Map config) {
             maven 'Maven-3'
         }
 
+        environment {
+            DOCKER_IMAGE = "my-app:${env.BUILD_NUMBER}"  // Tag Docker image with build number
+        }
+
         stages {
 
             stage('Checkout') {
                 steps {
                     git branch: config.branch,
-                        url: config.gitUrl
+                        url: config.gitUrl,
+                        credentialsId: config.credentialsId
                 }
             }
 
@@ -28,7 +33,23 @@ def call(Map config) {
                 }
             }
 
-            stage('Archive') {
+            stage('Docker Build') {
+                steps {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
+            }
+
+            stage('Docker Run') {
+                steps {
+                    sh '''
+                        docker stop my-app-container || true
+                        docker rm my-app-container || true
+                        docker run -d --name my-app-container -p 8080:8080 $DOCKER_IMAGE
+                    '''
+                }
+            }
+
+            stage('Archive Artifacts') {
                 steps {
                     archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
                 }
@@ -37,10 +58,10 @@ def call(Map config) {
 
         post {
             success {
-                echo "Build Successful"
+                echo "Build and Docker Deployment Successful ✅"
             }
             failure {
-                echo "Build Failed"
+                echo "Build or Deployment Failed ❌"
             }
         }
     }
